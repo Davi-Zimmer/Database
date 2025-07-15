@@ -5,7 +5,7 @@ const d = `
 
 export const archive = `
 
-!15 [123$0-3,7-9,12-15]
+!15 0 0 [123$0-3,7-9,12-15]
 
 def person .person
 
