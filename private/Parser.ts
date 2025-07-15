@@ -241,9 +241,18 @@ export function parseHeader( headerText: string  ){
 
     if( spaceAfterExcl === -1 ) throw Error(`Missing header list.`)
 
-    
     const maxIdStr = headerText.slice( exclMark + 1, spaceAfterExcl ).trim()
 
+    const [ start, end ] = headerText.split(/\s+/).filter( (_, i) => (i == 1 || i == 2) ).map( item => {
+        const n = parseInt( item )
+    
+        if( !isNaN( n ) ) return n
+
+        throw Error(`Invalid offset: ${item}`)
+    })
+
+    if( !start || !end ) throw Error(`Missing offset`)
+       
     const maxId = parseInt( maxIdStr, 10 )
     
     if( isNaN( maxId ) ) throw Error(`Invalid maxId: ${maxId}`)
@@ -254,10 +263,9 @@ export function parseHeader( headerText: string  ){
 
     if( startBracket === -1 || endBracket === -1 ) throw Error(`Missing "[" or "]" in header`)  
 
-
     const innerContent = headerText.slice( startBracket + 1, endBracket ).trim()
 
-    if( !innerContent ) return { maxId, batches: [] }
+    if( !innerContent ) return { maxId, batches: [], def: { start, end } }
 
     const batchStrings = (
         innerContent
@@ -316,7 +324,7 @@ export function parseHeader( headerText: string  ){
 
     }
 
-    return { maxId, batches }
+    return { maxId, batches, def: { start, end } }
 
 }
 
@@ -342,8 +350,4 @@ export function writeHeader( data: ParsedHeader ){
     const joined = batchStrings.length > 0 ? batchStrings.join(";") + ";" : ""
 
     return `!${maxId} [${joined}]`
-}
-
-export function writeDefLine( def: Def ): string {
-    return `def ${def.name} ${def.value}`
 }
