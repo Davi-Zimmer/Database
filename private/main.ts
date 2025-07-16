@@ -1,6 +1,8 @@
 import { archive } from "./archive.js";
 import Database from "./Database.js";
+import DatabaseManager from "./DatabaseManager.js";
 import { parseDefLine, parseFlags, parseHeader, parseInput, parseItemLine, writeHeader } from "./Parser.js";
+import Def from "./types/DbDefinition.js";
 /*
     const line = 'def value test'
     const def = parseDefLine( line )
@@ -19,7 +21,6 @@ import { parseDefLine, parseFlags, parseHeader, parseInput, parseItemLine, write
     const obs = parseInput( archive )
     console.log( obs )
     */
-   
 
 /*
 const data = `
@@ -53,8 +54,20 @@ const a = new Database()
 console.log( a.data.defs )
 */
 /*
-const line = '!24 100 200 [15000$0-3,5,7-22;21000$23-24,26-29]'
-console.log( parseHeader( line ))
+*/
+const header = '!24 100 200 [15000$0-3,5,7-22;21000$23-24,26-29]'
+
+// dbm.create()
+// dbm.readConfig()
+/*
+const db = (await DatabaseManager.getDatabase('cd505dbe-7f6f-4e55-82c6-21c5c7039084'))
+console.log( db )
 */
 
-new Database().create()
+// const a = (await DatabaseManager.database.getById('a#b8e4bd33-702a-4352-b861-a3a30183448a'))
+
+const def = { name:"perso", value: "a" } as Def
+
+const a = await DatabaseManager.database.createDef('c#e872d657-403e-4009-a9e2-17310c8586dc', def)
+
+console.log( a )

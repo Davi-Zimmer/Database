@@ -15,8 +15,17 @@ export function parseLines( input: string ){
     )
 }
 
+const validations = {
+    def: (name:string, value:string, line:string ) => {
+        if( !name ) throw Error(`Undefined definition name: ${line}`)
+        if( !value ) throw Error(`Undefined definition value: ${line}`)
+        if( !['@', '*', '.', '#'].includes( value[0] ) ) throw Error(`Invalid definition value (must start with ".", "#", "@" or "*")`)
+    }
+
+}
+
 export function parseDefLine( line: string ) : Def {
-    
+
     if( !line.startsWith('def ') ) throw Error(`Invalid Line for definition: ${line}`)
 
     const rest = line.slice( 4 ).trim()
@@ -29,11 +38,7 @@ export function parseDefLine( line: string ) : Def {
 
     const value = rest.slice( spaceIndex + 1 ).trim()
 
-    if( !name ) throw Error(`Undefined definition name: ${line}`)
-    
-    if( !value ) throw Error(`Undefined definition value: ${line}`)
-
-    if( !['@', '*', '.', '#'].includes( value[0] ) ) throw Error(`Invalid definition value (must start with ".", "#", "@" or "*")`)
+    validations.def( name, value, line )
 
     return { name, value }
 
@@ -147,15 +152,15 @@ export function parseItemLine( line: string ) : Node {
 export function parseInput( input: string ) : DbData {
     const defs: Def[] = []
     const items: Node[] = []
-    let header: ParsedHeader | undefined = undefined
+    // let header: ParsedHeader | undefined = undefined
     
     const lines = parseLines( input )
 
     for( const line of lines ){
-        if( line.startsWith('!')) {
-            if( header ) throw Error(`Multiple headers found. Only one is allowed.`)
-            header = parseHeader( line )
-        } else 
+        // if( line.startsWith('!')) {
+        //     if( header ) throw Error(`Multiple headers found. Only one is allowed.`)
+        //     header = parseHeader( line )
+        // } else 
         if( line.startsWith('def ') ) defs.push( parseDefLine( line ) ); else
         if( line.startsWith('#') ) items.push( parseItemLine( line ) ); else 
         throw Error(`Unknown line type: ${line}`)
@@ -163,7 +168,7 @@ export function parseInput( input: string ) : DbData {
 
     const defNames = new Set<string>()
     for( const d of defs ){
-        if( defNames.has( d.name ) ) throw Error(`Duplicate definition name: #{d.name}`)
+        if( defNames.has( d.name ) ) throw Error(`Duplicate definition name: ${d.name}`)
      
         defNames.add( d.name )
     }
@@ -175,9 +180,9 @@ export function parseInput( input: string ) : DbData {
         ids.add( item.id )
     }
 
-    if( !header ) throw Error(`Undefined header`)
+    // if( !header ) throw Error(`Undefined header`)
 
-    return { items, defs, header }
+    return { items, defs }
 
 }
 
@@ -229,7 +234,7 @@ export function tokenizeFlags( input: string ){
 
 }
 
-export function parseHeader( headerText: string  ){
+export function parseHeader( headerText: string ){
 
     headerText = headerText.trim()
     
@@ -242,7 +247,7 @@ export function parseHeader( headerText: string  ){
     if( spaceAfterExcl === -1 ) throw Error(`Missing header list.`)
 
     const maxIdStr = headerText.slice( exclMark + 1, spaceAfterExcl ).trim()
-
+    /*
     const [ start, end ] = headerText.split(/\s+/).filter( (_, i) => (i == 1 || i == 2) ).map( item => {
         const n = parseInt( item )
     
@@ -252,11 +257,10 @@ export function parseHeader( headerText: string  ){
     })
 
     if( !start || !end ) throw Error(`Missing offset`)
-       
+    */
     const maxId = parseInt( maxIdStr, 10 )
     
     if( isNaN( maxId ) ) throw Error(`Invalid maxId: ${maxId}`)
-
 
     const startBracket = headerText.indexOf( '[' , spaceAfterExcl )
     const endBracket = headerText.indexOf( ']' , spaceAfterExcl )
@@ -265,7 +269,7 @@ export function parseHeader( headerText: string  ){
 
     const innerContent = headerText.slice( startBracket + 1, endBracket ).trim()
 
-    if( !innerContent ) return { maxId, batches: [], def: { start, end } }
+    if( !innerContent ) return { maxId, batches: [] }
 
     const batchStrings = (
         innerContent
@@ -324,7 +328,7 @@ export function parseHeader( headerText: string  ){
 
     }
 
-    return { maxId, batches, def: { start, end } }
+    return { maxId, batches }
 
 }
 
@@ -350,4 +354,24 @@ export function writeHeader( data: ParsedHeader ){
     const joined = batchStrings.length > 0 ? batchStrings.join(";") + ";" : ""
 
     return `!${maxId} [${joined}]`
+}
+
+export function defToString( defs:Def[] ){
+    
+    const defsString = new Set<string>()
+
+    defs.forEach( def => {
+        
+        const definition = `def ${def.name} ${def.name}`
+
+        parseDefLine( definition )
+
+        if( defsString.has( definition ) ) throw Error(`Duplicate definition name: ${def.name}`)
+
+        defsString.add( definition )
+        
+    })
+
+    return [...defsString]
+
 }
